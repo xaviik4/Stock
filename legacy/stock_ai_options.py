@@ -9,7 +9,6 @@ import numpy as np
 plt.style.use('ggplot')  # Nice clean visual style
 
 # Webhook URL from Discord (replace with your own)
-WEBHOOK_URL = 'https://discord.com/api/webhooks/1359658404628660438/G1u6fF4QDtVJpxYY5noZrByfqSTs9MM9ZI-vlrLKjYVDTYVoWWNbgvx0tJMrQMia0Mis'
 
 # Define tickers
 tickers = ["NVDA", "AAPL", "MSFT", "TSLA", "IBM", "BULL", "VOO", "VTI"]
