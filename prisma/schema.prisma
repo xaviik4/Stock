@@ -1,0 +1,67 @@
+// Local-only portfolio + research database.
+// Nothing here leaves the machine: SQLite file on disk, no network calls.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// One row per holding, per account, as of the last CSV upload.
+model FidelityInvestment {
+  id           Int      @id @default(autoincrement())
+  accountType  String   @map("account_type")
+  symbol       String
+  quantity     Float
+  currentValue Float    @map("current_value")
+  uploadDate   DateTime @map("upload_date")
+
+  @@unique([accountType, symbol])
+  @@index([symbol])
+  @@map("fidelity_investments")
+}
+
+/// Snapshot of a whole portfolio upload, kept so past uploads are archived
+/// rather than lost when the live table is refreshed.
+model PortfolioSnapshot {
+  id         Int               @id @default(autoincrement())
+  uploadDate DateTime          @map("upload_date")
+  fileName   String?           @map("file_name")
+  totalValue Float             @map("total_value")
+  rowCount   Int               @map("row_count")
+  holdings   ArchivedHolding[]
+
+  @@map("portfolio_snapshots")
+}
+
+model ArchivedHolding {
+  id           Int               @id @default(autoincrement())
+  snapshotId   Int               @map("snapshot_id")
+  snapshot     PortfolioSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  accountType  String            @map("account_type")
+  symbol       String
+  quantity     Float
+  currentValue Float             @map("current_value")
+
+  @@index([snapshotId])
+  @@map("archived_holdings")
+}
+
+/// Qualitative research only.
+///
+/// Every quantitative metric (P/E, PEG, EV, FCF, EV/FCF, ROIC, share count) is
+/// now fetched live from Yahoo Finance at render time and is deliberately NOT
+/// persisted — a stale ratio in a database is worse than no ratio, because it
+/// looks authoritative. This table holds the judgements a data feed can't make.
+model StockAnalysis {
+  symbol              String   @id
+  debtStructure       String?  @map("debt_structure")
+  industryMoat        String?  @map("industry_moat")
+  managementAlignment String?  @map("management_alignment")
+  lastUpdated         DateTime @updatedAt @map("last_updated")
+
+  @@map("stock_analysis")
+}
